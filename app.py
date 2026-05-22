@@ -15,29 +15,34 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    user_message = request.json.get("message")
-    user_id = "default_user"
+    try:                                                    
+        user_message = request.json.get("message", "")
+        user_id = "default_user"
 
-    if "first-year" in user_message.lower():
-        user_context[user_id] = {"year": "first-year"}
-    
-    context = user_context.get(user_id, {})
+        if "first-year" in user_message.lower():
+            user_context[user_id] = {"year": "first-year"}
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a helpful university assistant that helps students with registration, hostel, fees, and advice. User info: {context}"
-            },
-            {
-                "role": "user",
-                "content": user_message
-            }
-        ]
-    )
+        context = user_context.get(user_id, {})
 
-    reply = response.choices[0].message.content
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"You are a helpful university assistant that helps students with registration, hostel, fees, and advice. User info: {context}"
+                },
+                {
+                    "role": "user",
+                    "content": user_message
+                }
+            ]
+        )
+
+        reply = response.choices[0].message.content
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return jsonify({"error": "Something went wrong with the AI companion"}), 500
 
     if "hostel" in user_message.lower():
         reply += "\n⚠️ Apply early! Hostel slots fill up quickly."
