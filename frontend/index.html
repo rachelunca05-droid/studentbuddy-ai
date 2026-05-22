@@ -12,23 +12,34 @@
     <div class="logo">StudentBuddy AI</div>
 
     <div class="nav-links">
+      <a href="index.html">Home</a>
       <a href="about.html">About</a>
-      <a href="features.html">Features</a>
+      <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
     </div>
-
   </nav>
 
-  <section class="hero">
-    <h1>Hello, I am StudentBuddy AI! </h1>
-    <p>Your AI assistant for a better university life</p>
+ <section class="hero">
+    <div class="deadline-banner" id="deadlineBanner">
+      <span></span>
+      <div>
+        <small>Upcoming Deadline</small>
+        <p id="deadlineText">No reminders yet. Add your first task.</p>
+      </div>
+    </div>
+
+    <h1>Stay organized. Study smarter.</h1>
+    <p>Your personal AI,StudentBuddy, an academic assistant for university life.</p>
 
     <div class="ai-box">
-      <textarea id="aiInput" placeholder="What's in your mind today?"></textarea>
+      <textarea
+        id="aiInput"
+        placeholder="Ask StudentBuddy anything..."
+      ></textarea>
 
       <div class="ai-bottom">
         <div class="left-icons">
-          <button>+</button>
-          <button>🌐</button>
+          <button onclick="fillPrompt('Help me plan my study schedule')">+</button>
+          <button onclick="fillPrompt('Give me productivity tips for students')">🌐</button>
         </div>
 
         <button class="send-btn" onclick="sendAIMessage()">↑</button>
@@ -48,13 +59,19 @@
     <div class="modal-content">
       <div class="modal-top">
         <h2>Add Reminder</h2>
-        <span onclick="closeReminderModal()">✖</span>
+        <span onclick="closeReminderModal()">✕</span>
       </div>
 
       <input type="text" id="taskTitle" placeholder="Task title">
-      <input type="text" id="taskCategory" placeholder="Category">
       <input type="date" id="taskDate">
       <input type="time" id="taskTime">
+
+      <select id="taskPriority">
+        <option value="High">High Priority</option>
+        <option value="Medium" selected>Medium Priority</option>
+        <option value="Low">Low Priority</option>
+      </select>
+
       <textarea id="taskNotes" placeholder="Notes"></textarea>
 
       <button class="save-btn" onclick="saveReminder()">Save Reminder</button>
@@ -62,33 +79,41 @@
   </div>
 
   <section class="task-section" id="taskSection">
-    <h2>Your Tasks</h2>
+    <div class="section-header">
+      <h2>Your Tasks</h2>
+      <button class="clear-btn" onclick="clearCompleted()">Clear Completed</button>
+    </div>
+
+    <div class="empty-state" id="emptyState">
+      <h3>No reminders yet.</h3>
+      <p>Start organizing your university life by adding your first task.</p>
+    </div>
+
     <div id="taskContainer"></div>
   </section>
 
   <section class="faq-section" id="faqSection">
     <h2>Frequently Asked Questions</h2>
 
-    <div class="faq-card">
+    <div class="faq-card" onclick="toggleFAQ(this)">
       <h3>How do I add a reminder?</h3>
-      <p>Click Add Reminder and fill in your task details.</p>
+      <p>Click Add Reminder, fill in your task details, choose a priority, and save it.</p>
     </div>
 
-    <div class="faq-card">
+    <div class="faq-card" onclick="toggleFAQ(this)">
       <h3>Can I view all my tasks?</h3>
-      <p>Yes. Use Task List to manage your reminders.</p>
+      <p>Yes. Use Task List to manage your saved reminders.</p>
     </div>
 
-    <div class="faq-card">
-      <h3>Can StudentBuddy AI remind me about important deadlines?</h3>
-      <p>Yes, StudentBuddy AI can help you set reminders for important deadlines.</p>
+    <div class="faq-card" onclick="toggleFAQ(this)">
+      <h3>Will my reminders stay after refresh?</h3>
+      <p>Yes. Your reminders are saved using localStorage in your browser.</p>
     </div>
-
-  </section>
+    
   </section>
 
   <footer>
-    Built to guide students • StudentBuddy AI By NULL
+    Built to guide students • StudentBuddy AI BY NULL
   </footer>
 
   <script src="script.js"></script>
