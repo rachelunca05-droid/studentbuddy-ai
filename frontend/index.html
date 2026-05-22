@@ -1,131 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CampusMate AI</title>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudentBuddy AI</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- NAVBAR -->
   <nav class="navbar">
-
-    <div class="logo">
-      StudentBuddy AI
-    </div>
+    <div class="logo">StudentBuddy AI</div>
 
     <div class="nav-links">
       <a href="#">About</a>
       <a href="#">Features</a>
-      <button class="signin-btn">Sign In</button>
     </div>
-
   </nav>
 
-  <!-- HERO -->
   <section class="hero">
+    <h1>Hello, I am StudentBuddy AI </h1>
+    <p>Your AI assistant for a better university life</p>
 
-    <h1>Hi, I’m your StudentBuddy AI</h1>
-
-    <p>
-      An AI assistant for your university life.
-    </p>
-
-    <!-- AI BOX -->
     <div class="ai-box">
-
-      <textarea
-        id="aiInput"
-        placeholder="What's in your mind today?"
-      ></textarea>
+      <textarea id="aiInput" placeholder="What's in your mind today?"></textarea>
 
       <div class="ai-bottom">
-
         <div class="left-icons">
           <button>+</button>
           <button>🌐</button>
         </div>
 
-        <button class="send-btn" onclick="sendAIMessage()">
-          ↑
-        </button>
-
+        <button class="send-btn" onclick="sendAIMessage()">↑</button>
       </div>
-
     </div>
 
-    <!-- AI RESPONSE -->
     <div class="ai-response" id="aiResponse"></div>
 
-    <!-- FEATURE BUTTONS -->
     <div class="feature-buttons">
-
-      <button onclick="openReminderModal()">
-        Add Reminder
-      </button>
-
-      <button onclick="showTaskList()">
-        Task List
-      </button>
-
-      <button onclick="showFAQ()">
-        FAQ
-      </button>
-
-      <button onclick="showUpcoming()">
-        Upcoming Reminder
-      </button>
-
+      <button class="add-reminder-btn" onclick="openReminderModal()">Add Reminder</button>
+      <button class="task-list-btn" onclick="showTaskList()">Task List</button>
+      <button class="faq-btn" onclick="showFAQ()">FAQ</button>
     </div>
-
   </section>
 
-  <!-- REMINDER MODAL -->
   <div class="modal" id="reminderModal">
-
     <div class="modal-content">
-
       <div class="modal-top">
         <h2>Add Reminder</h2>
-
-        <span onclick="closeReminderModal()">
-          ✖
-        </span>
+        <span onclick="closeReminderModal()">✖</span>
       </div>
 
       <input type="text" id="taskTitle" placeholder="Task title">
-
+      <input type="text" id="taskCategory" placeholder="Category">
       <input type="date" id="taskDate">
-
       <input type="time" id="taskTime">
+      <textarea id="taskNotes" placeholder="Notes"></textarea>
 
-      <textarea
-        id="taskNotes"
-        placeholder="Notes"
-      ></textarea>
-
-      <button class="save-btn" onclick="saveReminder()">
-        Save Reminder
-      </button>
-
+      <button class="save-btn" onclick="saveReminder()">Save Reminder</button>
     </div>
-
   </div>
 
-  <!-- TASK SECTION -->
   <section class="task-section" id="taskSection">
-
     <h2>Your Tasks</h2>
-
     <div id="taskContainer"></div>
-
   </section>
 
-  <!-- FAQ -->
   <section class="faq-section" id="faqSection">
-
     <h2>Frequently Asked Questions</h2>
 
     <div class="faq-card">
@@ -135,17 +75,21 @@
 
     <div class="faq-card">
       <h3>Can I view all my tasks?</h3>
-      <p>Yes. Use the Task List button to manage your reminders.</p>
+      <p>Yes. Use Task List to manage your reminders.</p>
+    </div>
+
+    <div class="faq-card">
+      <h3>Can StudentBuddy AI remind me about important deadlines??</h3>
+      <p>Yes, StudentBuddy AI can help you set reminders for important deadlines.</p>
     </div>
 
   </section>
+  </section>
 
-  <!-- FOOTER -->
   <footer>
-    Built for students with care. StudentBuddy AI 2026
+    Built to guide students • StudentBuddy AI BY NULL
   </footer>
 
   <script src="script.js"></script>
-
 </body>
 </html>
