@@ -220,6 +220,7 @@ body::before{
   font-size:14px;
   line-height:1.7;
   animation:fadeIn 0.25s ease;
+  white-space: pre-line; /* 🚀 FORCES BROWSER TO SHOW LINE BREAKS AND BULLETS CLEANLY */
 }
 
 .ai-user-message{
