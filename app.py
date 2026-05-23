@@ -246,6 +246,8 @@ def chat():
     user_message = request.json.get("message", "")
     user_id = "default_user"
     student_db_id = 1 
+    positive_responses = ["yes", "y", "yeah", "ya", "sure", "okay", "ok", "of course", "please", "can"]
+    negative_responses = ["no", "nope", "nah", "not now"]
 
     if "reminder" in user_message.lower():
 
@@ -263,7 +265,8 @@ def chat():
             for r in reminders:
                 reply += f"📝 {r['task']}\n📅 {r['date']} at {r['time']}\n\n"
                 reply += "Would you like to add another reminder or edit one? 😊"
-        
+        user_context[user_id] = {"intent": "reminder_followup"}
+
         return jsonify({
             "reply": reply,
             "response": reply,
@@ -271,7 +274,102 @@ def chat():
             "message": reply
         })
 
-        
+    if user_context.get(user_id, {}).get("intent") == "reminder_followup" \
+    and "task:" in user_message.lower() and "date:" in user_message.lower():
+
+        try:
+            lines = user_message.split("\n")
+
+            task = ""
+            date = ""
+            time = ""
+
+            for line in lines:
+                if "task:" in line.lower():
+                    task = line.split(":", 1)[1].strip()
+                elif "date:" in line.lower():
+                    date = line.split(":", 1)[1].strip()
+                elif "time:" in line.lower():
+                    time = line.split(":", 1)[1].strip()
+
+            supabase.table("reminders").insert({
+                "user_id": user_id,
+                "task": task,
+                "date": date,
+                "time": time
+            }).execute()
+
+            user_context[user_id] = {}
+
+            reply = (
+                "✅ Your reminder has been created successfully!\n\n"
+                f"📝 Task: {task}\n"
+                f"📅 Date: {date}\n"
+                f"⏰ Time: {time}"
+            )
+
+        except Exception as e:
+            print("ERROR:", e)
+            reply = "⚠️ I couldn't save your reminder. Please try again."
+
+        return jsonify({
+            "reply": reply,
+            "response": reply,
+            "text": reply,
+            "message": reply
+        })
+
+    if user_context.get(user_id, {}).get("intent") == "reminder_followup" and any (p in user_message.lower() for p in positive_responses):
+
+        reply = (
+            "⏰ Great! Let’s create a new reminder.\n\n"
+            "Tell me:\n"
+            "- What is the task?\n"
+            "- Date\n"
+            "- Time\n\n"
+            "Example:\n"
+            "👉 Remind me to submit assignment tomorrow at 5pm 😊"
+        )
+
+        return jsonify({
+            "reply": reply,
+            "response": reply,
+            "text": reply,
+            "message": reply
+        })
+
+    if user_context.get(user_id, {}).get("intent") == "reminder_followup" and any(n in user_message.lower() for n in negative_responses):
+
+        reply = "😊 No problem! Let me know if you need anything else."
+
+        user_context[user_id] = {}  # reset context
+
+        return jsonify({
+            "reply": reply,
+            "response": reply,
+            "text": reply,
+            "message": reply
+        })
+    
+    if "add another" in user_message.lower():
+
+        reply = (
+            "✅ Sure! Let’s add another reminder.\n\n"
+            "Tell me:\n"
+            "- Task name\n"
+            "- Date\n"
+            "- Time\n\n"
+            "Example:\n"
+            "👉 Remind me to pay fees tomorrow at 12pm 😊"
+        )
+
+        return jsonify({
+            "reply": reply,
+            "response": reply,
+            "text": reply,
+            "message": reply
+        })
+
     if "first-year" in user_message.lower():
         user_context[user_id] = {"year": "first-year"}
 
@@ -371,5 +469,33 @@ def chat():
         "message": reply
     })
 
+@app.route("/add-reminder", methods=["POST"])
+def add_reminder():
+    data = request.json
+
+    print("✅ RECEIVED:", data)
+
+    task = data.get("task")
+    date = data.get("date")
+    time = data.get("time")
+
+    user_id = "default_user"
+
+    try:
+        response = supabase.table("reminders").insert({
+            "user_id": user_id,
+            "task": task,
+            "date": date,
+            "time": time
+        }).execute()
+
+        print("✅ INSERT RESPONSE:", response)  # DEBUG
+
+        return jsonify({"status": "success"})
+
+    except Exception as e:
+        print("❌ INSERT ERROR:", e)
+        return jsonify({"status": "error"})
+    
 if __name__ == "__main__":
     app.run(debug=True)
