@@ -32,7 +32,6 @@ def chat():
 
         context = user_context.get(user_id, {})
 
-        # 🚀 1. ADD THESE LINES TO PULL YOUR REAL DATA FROM SUPABASE
         try:
             profile_data = supabase.table("student_profiles").select("*").eq("id", 1).single().execute().data
             assignment_data = supabase.table("Assignments").select("*").eq("student_id", 1).execute().data
@@ -41,7 +40,6 @@ def chat():
             print(f"Database fetch warning: {db_err}")
             profile_data, assignment_data, hostel_data = {}, [], []
 
-        # 🚀 2. BUNDLE IT ALL TOGETHER FOR DEEPSEEK
         database_context = f"""
         Profile: {profile_data}
         Assignments: {assignment_data}
@@ -53,7 +51,15 @@ def chat():
             messages=[
                 {
                     "role": "system",
-                    "content": f"You are a helpful university assistant. Use this live data to answer the student: {database_context}. Original Context: {context}"
+                    "content": (
+                        f"You are a helpful university companion. Use this live database context to answer "
+                        f"the student precisely.\n\n"
+                        f"CRITICAL FORMATTING RULES:\n"
+                        f"1. NEVER use Markdown tables (do not use '|' or '---').\n"
+                        f"2. Use simple, clear bullet points or clean spacing for lists.\n"
+                        f"3. Do not mention database IDs to the user.\n\n"
+                        f"Context: {context}\nDatabase: {database_context}"
+                    )
                 },
                 {
                     "role": "user",
@@ -62,13 +68,10 @@ def chat():
             ]
         )
 
-        reply = response.choices[0].message.content
-
     except Exception as e:
         print(f"Error occurred: {e}")
         return jsonify({"error": "Something went wrong with the AI companion"}), 500
 
-    # Your custom keyword filters stay exactly the same below here...
     if "hostel" in user_message.lower():
         reply += "\n⚠️ Apply early! Hostel slots fill up quickly."
     
