@@ -1,3 +1,6 @@
+/* =========================================================================
+   🌐 GLOBAL SETUP & BASE RESETS
+   ========================================================================= */
 *{
   margin:0;
   padding:0;
@@ -17,6 +20,7 @@ body{
   background-position:center;
   background-repeat:no-repeat;
   background-attachment:fixed;
+  overflow: hidden; /* Lock viewport scrolling to handle app context cleanly */
 }
 
 body::before{
@@ -30,8 +34,9 @@ body::before{
   z-index:-1;
 }
 
-/* NAVBAR */
-
+/* =========================================================================
+   🧭 NAVIGATION ARCHITECTURE
+   ========================================================================= */
 .navbar{
   width:100%;
   height:72px;
@@ -76,18 +81,22 @@ body::before{
   cursor:pointer;
 }
 
-/* HERO */
-
+/* =========================================================================
+   🚀 CORE CHAT INTERFACE WINDOW (Full-Screen Fluid Grid Layout)
+   ========================================================================= */
 .hero{
   width:100%;
+  max-width:940px;
+  margin:0 auto;
+  height:calc(100vh - 72px); /* Spans completely between navbar and screen base */
   display:flex;
   flex-direction:column;
   align-items:center;
-  padding:80px 20px 0;
+  padding:20px 20px 0px;    
 }
 
 .deadline-banner{
-  width:min(900px, 90%);
+  width:100%;
   background:white;
   border:1px solid #ececec;
   border-radius:18px;
@@ -95,8 +104,10 @@ body::before{
   display:flex;
   align-items:center;
   gap:14px;
-  margin-bottom:34px;
+  margin-bottom:16px;
   box-shadow:0 10px 28px rgba(0,0,0,0.035);
+  flex-shrink:0; 
+  order: 0;                   
 }
 
 .deadline-banner span{
@@ -119,40 +130,97 @@ body::before{
 
 .hero h1{
   font-family:Inter, Arial, sans-serif;
-  font-size:48px;
+  font-size:40px;
   font-weight:850;
   letter-spacing:-2px;
-  margin-bottom:12px;
+  margin-bottom:6px;
   text-align:center;
+  flex-shrink:0;
+  order: 0;
 }
 
 .hero p{
   color:#6b7280;
-  font-size:16px;
-  margin-bottom:42px;
+  font-size:15px;
+  margin-bottom:16px;
   text-align:center;
+  flex-shrink:0;
+  order: 0;
 }
 
-/* AI BOX */
+/* 📥 MAXIMUM RESPONSE SCROLL AREA (Claiming All Vertical Space) */
+.ai-response{
+  width:100%;
+  flex:1;                    /* Tells the display box to consume all remaining space */
+  overflow-y:auto;           /* Independent scrolling container */
+  padding-right:8px;
+  margin-top:10px;
+  margin-bottom:16px;        
+  order: 1;                  /* Forces message flow to stack directly above input container */
+}
 
+/* Custom Scrollbar Configuration */
+.ai-response::-webkit-scrollbar {
+  width: 6px;
+}
+.ai-response::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+}
+body.dark-mode .ai-response::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.ai-user-message,
+.ai-bot-message{
+  padding:18px;
+  border-radius:18px;
+  margin-bottom:14px;
+  font-size:14px;
+  line-height:1.7;
+  animation:fadeIn 0.25s ease;
+  white-space: pre-line;     /* Renders line-breaks, lists, and spacing patterns properly */
+}
+
+.ai-user-message{
+  background:#111;
+  color:white;
+  width:fit-content;
+  max-width:78%;
+  margin-left:auto;
+}
+
+.ai-bot-message{
+  background:white;
+  border:1px solid #ececec;
+  box-shadow:0 8px 25px rgba(0,0,0,0.04);
+  width:fit-content;
+  max-width:78%;
+  margin-right:auto;
+}
+
+/* ⌨️ BOTTOM CHATBOX FOOTPRINT CONTAINER */
 .ai-box{
-  width:min(900px, 90%);
-  background:rgba(255,255,255,0.88);
+  width:100%;
+  background:rgba(255,255,255,0.95);
   border:1px solid #e8e8e8;
-  border-radius:26px;
-  padding:22px;
-  box-shadow:0 20px 50px rgba(0,0,0,0.05);
+  border-radius:22px;
+  padding:14px 20px;         
+  box-shadow:0 -5px 25px rgba(0,0,0,0.015), 0 10px 30px rgba(0,0,0,0.035);
+  flex-shrink:0;             
+  margin-bottom:20px;        /* Stable padding from the baseline */
+  order: 2;                  /* Locked to display beneath message blocks */
 }
 
 .ai-box textarea{
   width:100%;
-  height:105px;
+  height:48px;               
   border:none;
   outline:none;
   resize:none;
   background:transparent;
   font-size:15px;
-  line-height:1.6;
+  line-height:1.5;
   color:#111;
   font-family:Inter, Arial, sans-serif;
 }
@@ -165,7 +233,7 @@ body::before{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-top:10px;
+  margin-top:6px;
 }
 
 .left-icons{
@@ -205,80 +273,9 @@ body::before{
   background:#000;
 }
 
-/* AI RESPONSE */
-
-.ai-response{
-  width:min(900px, 90%);
-  margin-top:24px;
-}
-
-.ai-user-message,
-.ai-bot-message{
-  padding:18px;
-  border-radius:18px;
-  margin-bottom:12px;
-  font-size:14px;
-  line-height:1.7;
-  animation:fadeIn 0.25s ease;
-  white-space: pre-line; /* 🚀 FORCES BROWSER TO SHOW LINE BREAKS AND BULLETS CLEANLY */
-}
-
-.ai-user-message{
-  background:#111;
-  color:white;
-  width:fit-content;
-  max-width:75%;
-  margin-left:auto;
-}
-
-.ai-bot-message{
-  background:white;
-  border:1px solid #ececec;
-  box-shadow:0 8px 25px rgba(0,0,0,0.04);
-  max-width:75%;
-}
-
-/* FEATURE BUTTONS */
-
-.feature-buttons{
-  margin-top:40px;
-  display:flex;
-  gap:14px;
-  flex-wrap:wrap;
-  justify-content:center;
-}
-
-.feature-buttons button{
-  padding:14px 22px;
-  border:1px solid transparent;
-  border-radius:16px;
-  box-shadow:0 8px 22px rgba(0,0,0,0.04);
-  font-family:Inter, Arial, sans-serif;
-  font-size:15px;
-  font-weight:700;
-  cursor:pointer;
-  transition:0.2s;
-  color:#111;
-}
-
-.feature-buttons button:hover{
-  transform:translateY(-2px);
-}
-
-.add-reminder-btn{
-  background:#dff5e8;
-}
-
-.task-list-btn{
-  background:#dfeeff;
-}
-
-.faq-btn{
-  background:#ffe3e3;
-}
-
-/* MODAL */
-
+/* =========================================================================
+   🗂️ UTILITY MODAL INTERFACES (Kept for systemic page functionality support)
+   ========================================================================= */
 .modal{
   width:100%;
   height:100vh;
@@ -374,181 +371,9 @@ body::before{
   transform:translateY(-1px);
 }
 
-/* TASK SECTION */
-
-.task-section{
-  width:min(900px, 90%);
-  margin:80px auto 70px;
-}
-
-.section-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:18px;
-}
-
-.task-section h2,
-.faq-section h2{
-  font-size:24px;
-  font-family:Inter, Arial, sans-serif;
-  font-weight:850;
-  letter-spacing:-0.6px;
-}
-
-.clear-btn{
-  border:none;
-  background:#f1f1f1;
-  border-radius:12px;
-  padding:10px 14px;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.empty-state{
-  background:white;
-  border:1px dashed #d7d7d7;
-  border-radius:22px;
-  padding:35px;
-  text-align:center;
-  color:#6b7280;
-}
-
-.empty-state h3{
-  color:#111;
-  margin-bottom:8px;
-}
-
-.task-card{
-  background:white;
-  border:1px solid #ececec;
-  border-radius:20px;
-  padding:22px;
-  margin-bottom:16px;
-  box-shadow:0 8px 25px rgba(0,0,0,0.04);
-  animation:fadeIn 0.25s ease;
-}
-
-.task-card.completed{
-  opacity:0.65;
-}
-
-.task-card.completed h3{
-  text-decoration:line-through;
-}
-
-.task-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  margin-bottom:10px;
-}
-
-.task-card h3{
-  font-size:18px;
-  font-family:Inter, Arial, sans-serif;
-}
-
-.task-card p{
-  color:#6b7280;
-  margin-bottom:6px;
-  font-size:14px;
-  line-height:1.5;
-}
-
-.priority{
-  padding:6px 10px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:800;
-}
-
-.priority.high{
-  background:#ffe3e3;
-  color:#b42318;
-}
-
-.priority.medium{
-  background:#fff4cc;
-  color:#875a00;
-}
-
-.priority.low{
-  background:#dff5e8;
-  color:#067647;
-}
-
-.task-buttons{
-  margin-top:16px;
-  display:flex;
-  gap:10px;
-}
-
-.done-btn,
-.delete-btn{
-  padding:10px 15px;
-  border:none;
-  border-radius:12px;
-  color:white;
-  font-size:13px;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.done-btn{
-  background:#111;
-}
-
-.delete-btn{
-  background:#ef4444;
-}
-
-/* FAQ */
-
-.faq-section{
-  width:min(900px, 90%);
-  margin:70px auto;
-}
-
-.faq-section h2{
-  margin-bottom:18px;
-}
-
-.faq-card{
-  background:white;
-  border:1px solid #ececec;
-  border-radius:20px;
-  padding:22px;
-  margin-bottom:16px;
-  box-shadow:0 8px 25px rgba(0,0,0,0.04);
-  cursor:pointer;
-}
-
-.faq-card h3{
-  margin-bottom:0;
-  font-size:17px;
-  font-family:Inter, Arial, sans-serif;
-  font-weight:750;
-}
-
-.faq-card p{
-  color:#6b7280;
-  font-size:14px;
-  line-height:1.7;
-  max-height:0;
-  overflow:hidden;
-  margin-top:0;
-  transition:0.25s ease;
-}
-
-.faq-card.open p{
-  max-height:120px;
-  margin-top:12px;
-}
-
-/* ABOUT PAGE */
-
+/* =========================================================================
+   📄 ABOUT PAGE ARCHITECTURE
+   ========================================================================= */
 .about-page{
   width:100%;
   display:flex;
@@ -620,17 +445,17 @@ body::before{
   background:#f3f3f3;
 }
 
-/* FOOTER */
-
+/* FOOTER SETUP */
 footer{
   text-align:center;
-  padding:35px;
+  padding:20px 35px;
   color:#8b8b8b;
   font-size:13px;
 }
 
-/* DARK MODE */
-
+/* =========================================================================
+   🌓 CORE SYSTEM DARK-MODE INSTRUCTIONS
+   ========================================================================= */
 body.dark-mode{
   background:#111;
   color:#f5f5f5;
@@ -640,19 +465,14 @@ body.dark-mode .navbar,
 body.dark-mode .ai-box,
 body.dark-mode .deadline-banner,
 body.dark-mode .ai-bot-message,
-body.dark-mode .task-card,
-body.dark-mode .faq-card,
 body.dark-mode .about-card,
-body.dark-mode .modal-content,
-body.dark-mode .empty-state{
+body.dark-mode .modal-content{
   background:#1b1b1b;
   border-color:#333;
   color:#f5f5f5;
 }
 
 body.dark-mode .hero p,
-body.dark-mode .task-card p,
-body.dark-mode .faq-card p,
 body.dark-mode .about-card p,
 body.dark-mode footer,
 body.dark-mode .deadline-banner small{
@@ -669,13 +489,13 @@ body.dark-mode .modal-content select{
 }
 
 body.dark-mode .deadline-banner p,
-body.dark-mode .empty-state h3,
 body.dark-mode .nav-links a{
   color:#f5f5f5;
 }
 
-/* ANIMATIONS */
-
+/* =========================================================================
+   🎬 MOTION LAYER GRAPHICS
+   ========================================================================= */
 @keyframes fadeIn{
   from{
     opacity:0;
@@ -698,8 +518,9 @@ body.dark-mode .nav-links a{
   }
 }
 
-/* RESPONSIVE */
-
+/* =========================================================================
+   📱 CLEAN RESPONSIVE INTERFACE COMPONENT SCALING
+   ========================================================================= */
 @media(max-width:768px){
   .navbar{
     padding:0 20px;
@@ -710,29 +531,22 @@ body.dark-mode .nav-links a{
   }
 
   .hero{
-    padding-top:60px;
+    height: auto;
+    min-height: calc(100vh - 72px);
+    padding-top: 30px;
+  }
+  
+  .ai-response {
+    overflow-y: visible;
+    height: auto;
   }
 
   .hero h1{
-    font-size:36px;
+    font-size:32px;
   }
 
   .hero p{
-    font-size:15px;
-  }
-
-  .feature-buttons{
-    width:90%;
-  }
-
-  .feature-buttons button{
-    width:100%;
-  }
-
-  .section-header{
-    align-items:flex-start;
-    flex-direction:column;
-    gap:12px;
+    font-size:14px;
   }
 
   .about-card{
