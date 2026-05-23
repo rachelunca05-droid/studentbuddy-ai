@@ -247,6 +247,31 @@ def chat():
     user_id = "default_user"
     student_db_id = 1 
 
+    if "reminder" in user_message.lower():
+
+        reminder_res = supabase.table("reminders")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .execute()
+        
+        reminders = reminder_res.data
+
+        if not reminders:
+            reply = "📌 **Your Reminders:**\n- You currently have no reminders set.\n\nWould you like me to help you create one? 😊"
+        else:
+            reply = "📌 **Your Reminders:**\n\n"
+            for r in reminders:
+                reply += f"📝 {r['task']}\n📅 {r['date']} at {r['time']}\n\n"
+                reply += "Would you like to add another reminder or edit one? 😊"
+        
+        return jsonify({
+            "reply": reply,
+            "response": reply,
+            "text": reply,
+            "message": reply
+        })
+
+        
     if "first-year" in user_message.lower():
         user_context[user_id] = {"year": "first-year"}
 
@@ -255,6 +280,7 @@ def chat():
     profile_data = {"name": "Student", "semester": "Current"}
     assignment_data = []
     hostel_data = []
+    reminder_data = []
     emotional_profile = {}
     past_chat_logs = []
 
@@ -270,6 +296,10 @@ def chat():
         hostel_res = supabase.table("Hostel").select("*").execute()
         if hostel_res.data:
             hostel_data = hostel_res.data
+
+        reminder_res = supabase.table("reminders").select("*").eq("user_id", user_id).execute()
+        if reminder_res.data:
+            reminder_data = reminder_res.data
 
         emo_res = supabase.table("emotional_context").select("*").eq("student_id", student_db_id).execute()
         if emo_res.data:

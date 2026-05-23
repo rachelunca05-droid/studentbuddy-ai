@@ -149,6 +149,22 @@ function saveReminder(){
     completed: false
   };
 
+  fetch("http://127.0.0.1:5000/add-reminder", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      task: title,
+      date: date,
+      time: time
+    })
+    }
+  )
+  .then(res => res.json())
+  .then(data => console.log("Saved to backend:", data))
+  .catch(err => console.log("Backend error:", err));
+
   reminders.push(reminder);
   saveToLocalStorage();
   renderTasks();
