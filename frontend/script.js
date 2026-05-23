@@ -61,7 +61,7 @@ async function sendAIMessage(){
     }
 
     const data = await res.json();
-    loadingMessage.textContent = data.response || getDemoAIResponse(question);
+    loadingMessage.textContent = data.reply || getDemoAIResponse(question);
 
   } catch (error) {
     loadingMessage.textContent = getDemoAIResponse(question);
