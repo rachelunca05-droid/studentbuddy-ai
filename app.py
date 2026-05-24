@@ -13,11 +13,29 @@ client = OpenAI(
 )
 user_context = {}
 
+FLOW_HOSTEL = "hostel_flow"
+FLOW_ASSIGNMENT = "assignment_flow"
+FLOW_NAVIGATION = "navigation_flow"
+
 SUPABASE_URL = "https://nydgmpsoqidjxyoxxhaz.supabase.co"
 SUPABASE_KEY = "sb_publishable_Nu2qT_iCvft5r0iTTuqryw_3UoM6P42"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 SYSTEM_PROMPT = """
+You are an intelligent AI assistant similar to ChatGPT.
+
+You should:
+- Think before responding
+- Ask follow-up questions if needed
+- Adapt to the user's situation
+- Personalize responses using past context
+- Break down complex help into steps
+
+Do NOT:
+- Give robotic replies
+- Rush answers
+- Ignore emotional context
+
 You are a smart student support assistant for a university system.
 
 Your purpose is to help students with:
@@ -239,6 +257,87 @@ Never respond with one heavy paragraph.
 @app.route("/")
 def home():
     return "Backend is running!"
+    
+def format_hostel_response(hostel_data):
+    if not hostel_data:
+        return "❌ No hostel options available right now."
+
+    reply = "Sure! 😊 Here are the available hostel options:\n\n"
+
+    for h in hostel_data:
+        reply += f"""🏠 {h.get('name', 'Hostel Room')}
+- Type: {h.get('type', 'Standard')}
+- Price: {h.get('price', 'N/A')}
+- Status: {h.get('status', 'Unknown')}
+
+"""
+
+    reply += "📌 Note:\n- Apply early to secure your slot.\n\nWould you like to choose one of these options?"
+    return reply
+
+import json
+
+def run_agent(messages, user_id, max_steps=3):
+
+    for step in range(max_steps):
+
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=messages,
+            temperature=0.7,
+        )
+
+        msg = response.choices[0].message
+
+        # ✅ Normal response (no tool calling yet)
+        return msg.content
+
+    return "⚠️ I couldn’t process that properly."
+
+def clean_response(text):
+    return text.strip().replace("  ", " ")
+
+import random
+
+def add_followup(reply):
+    suggestions = [
+        "📝 Need help planning your assignment?",
+        "🏠 Looking for hostel options?",
+        "⏰ Want to set a reminder?",
+        "💙 Need help managing stress?"
+    ]
+
+    chosen = random.sample(suggestions, 2)
+
+    reply += "\n\n💡 You may also want:\n"
+    for c in chosen:
+        reply += f"- {c}\n"
+
+    return reply
+
+from datetime import datetime, timedelta
+
+def convert_date_time(date_str, time_str):
+    try:
+        now = datetime.now()
+
+        # ✅ Convert date
+        if "tomorrow" in date_str.lower():
+            date = now + timedelta(days=1)
+        else:
+            date = datetime.strptime(date_str, "%Y-%m-%d")
+
+        formatted_date = date.strftime("%Y-%m-%d")
+
+        # ✅ Convert time (5pm → 17:00:00)
+        time = datetime.strptime(time_str.strip(), "%I%p")
+        formatted_time = time.strftime("%H:%M:%S")
+
+        return formatted_date, formatted_time
+
+    except Exception as e:
+        print("⚠️ Conversion error:", e)
+        return None, None
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -246,134 +345,6 @@ def chat():
     user_message = request.json.get("message", "")
     user_id = "default_user"
     student_db_id = 1 
-    positive_responses = ["yes", "y", "yeah", "ya", "sure", "okay", "ok", "of course", "please", "can"]
-    negative_responses = ["no", "nope", "nah", "not now"]
-
-    if "reminder" in user_message.lower():
-
-        reminder_res = supabase.table("reminders")\
-            .select("*")\
-            .eq("user_id", user_id)\
-            .execute()
-        
-        reminders = reminder_res.data
-
-        if not reminders:
-            reply = "📌 **Your Reminders:**\n- You currently have no reminders set.\n\nWould you like me to help you create one? 😊"
-        else:
-            reply = "📌 **Your Reminders:**\n\n"
-            for r in reminders:
-                reply += f"📝 {r['task']}\n📅 {r['date']} at {r['time']}\n\n"
-                reply += "Would you like to add another reminder or edit one? 😊"
-        user_context[user_id] = {"intent": "reminder_followup"}
-
-        return jsonify({
-            "reply": reply,
-            "response": reply,
-            "text": reply,
-            "message": reply
-        })
-
-    if user_context.get(user_id, {}).get("intent") == "reminder_followup" \
-    and "task:" in user_message.lower() and "date:" in user_message.lower():
-
-        try:
-            lines = user_message.split("\n")
-
-            task = ""
-            date = ""
-            time = ""
-
-            for line in lines:
-                if "task:" in line.lower():
-                    task = line.split(":", 1)[1].strip()
-                elif "date:" in line.lower():
-                    date = line.split(":", 1)[1].strip()
-                elif "time:" in line.lower():
-                    time = line.split(":", 1)[1].strip()
-
-            supabase.table("reminders").insert({
-                "user_id": user_id,
-                "task": task,
-                "date": date,
-                "time": time
-            }).execute()
-
-            user_context[user_id] = {}
-
-            reply = (
-                "✅ Your reminder has been created successfully!\n\n"
-                f"📝 Task: {task}\n"
-                f"📅 Date: {date}\n"
-                f"⏰ Time: {time}"
-            )
-
-        except Exception as e:
-            print("ERROR:", e)
-            reply = "⚠️ I couldn't save your reminder. Please try again."
-
-        return jsonify({
-            "reply": reply,
-            "response": reply,
-            "text": reply,
-            "message": reply
-        })
-
-    if user_context.get(user_id, {}).get("intent") == "reminder_followup" and any (p in user_message.lower() for p in positive_responses):
-
-        reply = (
-            "⏰ Great! Let’s create a new reminder.\n\n"
-            "Tell me:\n"
-            "- What is the task?\n"
-            "- Date\n"
-            "- Time\n\n"
-            "Example:\n"
-            "👉 Remind me to submit assignment tomorrow at 5pm 😊"
-        )
-
-        return jsonify({
-            "reply": reply,
-            "response": reply,
-            "text": reply,
-            "message": reply
-        })
-
-    if user_context.get(user_id, {}).get("intent") == "reminder_followup" and any(n in user_message.lower() for n in negative_responses):
-
-        reply = "😊 No problem! Let me know if you need anything else."
-
-        user_context[user_id] = {}  # reset context
-
-        return jsonify({
-            "reply": reply,
-            "response": reply,
-            "text": reply,
-            "message": reply
-        })
-    
-    if "add another" in user_message.lower():
-
-        reply = (
-            "✅ Sure! Let’s add another reminder.\n\n"
-            "Tell me:\n"
-            "- Task name\n"
-            "- Date\n"
-            "- Time\n\n"
-            "Example:\n"
-            "👉 Remind me to pay fees tomorrow at 12pm 😊"
-        )
-
-        return jsonify({
-            "reply": reply,
-            "response": reply,
-            "text": reply,
-            "message": reply
-        })
-
-    if "first-year" in user_message.lower():
-        user_context[user_id] = {"year": "first-year"}
-
-    context = user_context.get(user_id, {})
 
     profile_data = {"name": "Student", "semester": "Current"}
     assignment_data = []
@@ -409,15 +380,275 @@ def chat():
     except Exception as db_err:
         print(f"⚠️ Database Context Reading Alert: {db_err}")
 
-    database_context = f"""
-    LIVE UTILITY RECORDS AVAILABLE:
-    Profile: {profile_data}
-    Assignments: {assignment_data}
-    Hostels: {hostel_data}
+    if "task:" in user_message.lower() and "date:" in user_message.lower() and "time:" in user_message.lower():
+
+        try:
+            lines = user_message.split("\n")
+
+            task = ""
+            date = ""
+            time = ""
+
+            for line in lines:
+                if "task:" in line.lower():
+                    task = line.split(":", 1)[1].strip()
+                elif "date:" in line.lower():
+                    date = line.split(":", 1)[1].strip()
+                elif "time:" in line.lower():
+                    time = line.split(":", 1)[1].strip()
+
+            db_date, db_time = convert_date_time(date, time)
+
+            if not db_date or not db_time:
+                reply = "⚠️ I couldn't understand the date or time. Please clarify 😊"
+            else:
+                supabase.table("reminders").insert({
+                    "user_id": user_id,
+                    "task": task,
+                    "date": db_date,
+                    "time": db_time
+                }).execute()
+
+            user_context[user_id] = {}
+
+            reply = (
+                "✅ Your reminder has been created successfully!\n\n"
+                f"📝 Task: {task}\n"
+                f"📅 Date: {date}\n"
+                f"⏰ Time: {time}"
+            )
+
+        except Exception as e:
+            print("ERROR:", e)
+            reply = "⚠️ I couldn't save your reminder. Please try again."
+
+        return jsonify({
+            "reply": reply,
+            "response": reply,
+            "text": reply,
+            "message": reply
+        })
     
-    💙 ACTIVE EMOTIONAL HISTORY METRICS:
-    Recent User Mood: {emotional_profile.get('recent_mood', 'Neutral')}
-    Preferred Support Style: {emotional_profile.get('preferred_support_style', 'Friendly and concise')}
+    if "add another" in user_message.lower():
+
+        reply = (
+            "✅ Sure! Let’s add another reminder.\n\n"
+            "Tell me:\n"
+            "- Task name\n"
+            "- Date\n"
+            "- Time\n\n"
+            "Example:\n"
+            "👉 Remind me to pay fees tomorrow at 12pm 😊"
+        )
+
+        return jsonify({
+            "reply": reply,
+            "response": reply,
+            "text": reply,
+            "message": reply
+        })
+
+    if user_context.get(user_id, {}).get("intent") == "reminder_creation":
+
+        context = user_context[user_id]
+        step = context.get("step")
+
+        if step == "ask_task":
+            context["task"] = user_message
+            context["step"] = "ask_date"
+
+            return jsonify({
+                "reply": "📅 When should I remind you?",
+                "response": "📅 When should I remind you?",
+                "text": "📅 When should I remind you?",
+                "message": "📅 When should I remind you?"
+            })
+
+        elif step == "ask_date":
+            context["date"] = user_message
+            context["step"] = "ask_time"
+
+            return jsonify({
+                "reply": "⏰ What time?",
+                "response": "⏰ What time?",
+                "text": "⏰ What time?",
+                "message": "⏰ What time?"
+            })
+
+        elif step == "ask_time":
+            context["time"] = user_message
+
+            supabase.table("reminders").insert({
+                "user_id": user_id,
+                "task": context["task"],
+                "date": context["date"],
+                "time": context["time"]
+            }).execute()
+
+            user_context[user_id] = {}
+
+            reply = f"""✅ Reminder created!
+
+    📝 Task: {context['task']}
+    📅 Date: {context['date']}
+    ⏰ Time: {context['time']}
+"""
+
+            return jsonify({
+                "reply": reply,
+                "response": reply,
+                "text": reply,
+                "message": reply
+            })
+        
+    if user_context.get(user_id, {}).get("intent") == FLOW_HOSTEL:
+
+        context = user_context[user_id]
+        step = context.get("step")
+
+        if step == "show_options":
+            context["step"] = "ask_preference"
+
+            return jsonify({
+                "message": "🏠 Do you prefer:\n- Single room\n- Shared room\n- Cheapest option?"
+            })
+
+        elif step == "ask_preference":
+
+            preference = user_message.lower()
+
+            filtered = []
+
+            for h in hostel_data:
+                name = str(h.get("name", "")).lower()
+                h_type = str(h.get("type", "")).lower()
+
+                if "single" in preference and "single" in h_type:
+                    filtered.append(h)
+                elif "shared" in preference and "shared" in h_type:
+                    filtered.append(h)
+                elif "cheap" in preference or "cheapest" in preference:
+                    filtered.append(h)
+
+            if not filtered:
+                filtered = hostel_data
+
+            user_context[user_id] = {}
+
+            reply = format_hostel_response(filtered)
+
+            return jsonify({
+                "message": reply,
+                "reply": reply,
+                "response": reply,
+                "text": reply
+            })
+
+    if user_context.get(user_id, {}).get("intent") == FLOW_ASSIGNMENT:
+
+        context = user_context[user_id]
+        step = context.get("step")
+
+        if step == "choose_assignment":
+
+            try:
+                index = int(user_message) - 1
+                selected = assignment_data[index]
+
+                context["assignment"] = selected
+                context["step"] = "planning"
+
+                return jsonify({
+                "message": f"✅ Great! Let's plan: {selected.get('title')}\n\nType 'start' to get a workflow."
+                })
+
+            except:
+                return jsonify({"message": "⚠️ Please enter a valid number."})
+
+        elif step == "planning":
+
+            user_context[user_id] = {}
+
+            reply = """Sure! 📝 Here is a simple workflow:
+
+    📌 Step 1: Understand the task
+    - Read instructions carefully
+
+    📌 Step 2: Research
+    - Gather key materials
+
+    📌 Step 3: Draft
+    - Write your first version
+
+    📌 Step 4: Review
+    - Edit and finalize
+
+    Would you like help starting Step 1?
+    """
+
+            return jsonify({"message": reply})
+    
+    if user_context.get(user_id, {}).get("intent") == FLOW_NAVIGATION:
+
+        context = user_context[user_id]
+        step = context.get("step")
+
+        if step == "ask_destination":
+            context["destination"] = user_message
+            context["step"] = "ask_start"
+
+            return jsonify({"message": "📍 Where are you starting from?"})
+
+        elif step == "ask_start":
+
+            destination = context.get("destination")
+
+            user_context[user_id] = {}
+
+            reply = f"""Sure! 📍 I can help you find it.
+
+    🧭 Destination:
+    - {destination}
+
+    🚶 Direction:
+    - Start from your location
+    - Walk toward main campus road
+    - Follow signs to {destination}
+
+    🖼️ Visual guide:
+    - I can generate a map image if needed.
+
+    """
+
+            return jsonify({"message": reply})
+
+    if "first-year" in user_message.lower():
+        user_context[user_id] = {"year": "first-year"}
+
+    context = user_context.get(user_id, {})
+
+    database_context = f"""
+    🎓 STUDENT PROFILE:
+    Name: {profile_data.get('name')}
+    Semester: {profile_data.get('semester')}
+
+    📚 CURRENT ASSIGNMENTS:
+    {assignment_data}
+
+    🏠 HOSTELS:
+    {hostel_data}
+
+    💙 EMOTIONAL STATE:
+    Recent Mood: {emotional_profile.get('recent_mood', 'Neutral')}
+
+    🧠 RECENT CHAT MEMORY:
+    {past_chat_logs}
+
+    📌 Instructions:
+    - Use this information naturally when relevant
+    - Do NOT repeat raw database data
+    - Do NOT dump lists directly
+    - Summarize or explain instead
     """
 
     messages_payload = [
@@ -433,11 +664,7 @@ def chat():
     messages_payload.append({"role": "user", "content": user_message})
 
     try:
-        response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=messages_payload
-        )
-        reply = response.choices[0].message.content
+        reply = run_agent(messages_payload, user_id)
 
         try:
             supabase.table("chat_memory").insert({"student_id": student_db_id, "role": "user", "content": user_message}).execute()
@@ -461,6 +688,10 @@ def chat():
     
     if "registration" in user_message.lower() and "📅" not in reply and "Befrienders" not in reply:
         reply += "\n\n📅 Don't forget to complete registration before the deadline."
+
+    reply = add_followup(reply)
+
+    reply = clean_response(reply)
 
     return jsonify({
         "reply": reply,
